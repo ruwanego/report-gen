@@ -2,3 +2,9 @@ test.json
 results.json
 .metals/metals.h2.db
 .metals/metals.lock.db
+
+# Excel temporary
+~$*.xls*
+
+# Excel Backup File
+*.xlk
