@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"text/template"
@@ -24,10 +25,10 @@ func prettyPrint(v interface{}) (err error) {
 
 // convertToDirectLink Converts the google drive view link of the audit.csv file
 // to a direct link
-func convertToDirectLink(url string) string {
+func convertToDirectLink(auditURL string) string {
 	// eg. https://drive.google.com/open?id=1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d
 	// 1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d
-	u, err := url.Parse(url)
+	u, err := url.Parse(auditURL)
 	if err != nil {
 		log.Fatal(err)
 	}
