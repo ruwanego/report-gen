@@ -26,15 +26,20 @@ func prettyPrint(v interface{}) (err error) {
 // convertToDirectLink Converts the google drive view link of the audit.csv file
 // to a direct link
 func convertToDirectLink(auditURL string) string {
-	// eg. https://drive.google.com/open?id=1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d
+	// eg. we have https://drive.google.com/file/d/1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d/view
+	// we want to convert it to : https://drive.google.com/open?id=1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d
 	// 1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d
 	u, err := url.Parse(auditURL)
+
+	log.Print(u)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	id := u.Query()["id"]
 
+	// https://drive.google.com/file/d/1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d/view
 	tmpl, err := template.New("url").Parse("https://drive.google.com/uc?export=download&id={{.Id}}")
 	if err != nil {
 		panic(err)
@@ -129,7 +134,9 @@ func main() {
 	// 		continue
 	// 	}
 	// }
-	jsonString, err := json.Marshal(whole)
+
+	// whole[]
+	jsonString, err := json.MarshalIndent(whole, "", "    ")
 
 	f2, err2 := os.Create("results.json")
 	if err2 != nil {
