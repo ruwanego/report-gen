@@ -6,3 +6,6 @@ results.json
 
 # Excel Backup File
 *.xlk
+
+.idea/
+.metals/
