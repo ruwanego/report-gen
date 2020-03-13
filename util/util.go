@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-// downloadFile will download a url to a local file. It's efficient because it will
+// DownloadFile will download a url to a local file. It's efficient because it will
 // write as it downloads and not load the whole file into memory.
 func DownloadFile(filepath string, url string) error {
 
@@ -31,7 +31,7 @@ func DownloadFile(filepath string, url string) error {
 	return err
 }
 
-// convertToDirectLink Converts the google drive view link of the audit.csv file
+// ConvertToDirectLink Converts the google drive view link of the audit.csv file
 // to a direct link
 func ConvertToDirectLink(auditURL string) string {
 	// eg. we have https://drive.google.com/open?id=1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d
