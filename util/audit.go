@@ -14,6 +14,6 @@ type AuditEvent struct {
 
 type Audit []AuditEvent
 
-func ParseAudit(file os.File) {
-
+func ParseAudit(file os.File) Audit {
+	return Audit{}
 }

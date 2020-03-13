@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/360EntSecGroup-Skylar/excelize"
-	"github.com/ruwanego/report-gen/util"
 	"os"
 	"strings"
+
+	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/ruwanego/report-gen/util"
 )
 
 func main() {
@@ -73,7 +74,7 @@ func main() {
 
 	jsonString, _ = json.Marshal(results)
 
-	fixedJsonString := string(bytes.Replace([]byte(jsonString), []byte("\\u0026"), []byte("&"), -1))
+	fixedJSONString := string(bytes.Replace([]byte(jsonString), []byte("\\u0026"), []byte("&"), -1))
 
 	f2, err2 := os.Create("results.json")
 	if err2 != nil {
@@ -81,7 +82,7 @@ func main() {
 		return
 	}
 
-	_, err3 := f2.WriteString(fixedJsonString)
+	_, err3 := f2.WriteString(fixedJSONString)
 	if err3 != nil {
 		fmt.Println(err)
 		f2.Close()
