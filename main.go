@@ -4,88 +4,23 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"net/url"
+	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/ruwanego/report-gen/util"
 	"os"
 	"strings"
-	"text/template"
-
-	"github.com/360EntSecGroup-Skylar/excelize"
 )
 
-func prettyPrint(v interface{}) (err error) {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err == nil {
-		fmt.Println(string(b))
-	}
-	return
-}
-
-// convertToDirectLink Converts the google drive view link of the audit.csv file
-// to a direct link
-func convertToDirectLink(auditURL string) string {
-	// eg. we have https://drive.google.com/file/d/1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d/view
-	// we want to convert it to : https://drive.google.com/open?id=1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d
-	// 1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d
-	u, err := url.Parse(auditURL)
-
-	log.Print(u)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	id := u.Query()["id"]
-
-	// https://drive.google.com/file/d/1q4ubKjRBCPS1eViYyiLcivp4cA7iG41d/view
-	tmpl, err := template.New("url").Parse("https://drive.google.com/uc?export=download&id={{.Id}}")
-	if err != nil {
-		panic(err)
-	}
-
-	var tmplBytes bytes.Buffer
-
-	err = tmpl.Execute(&tmplBytes, id)
-	if err != nil {
-		panic(err)
-	}
-
-	return tmplBytes.String()
-}
-
-// downloadFile will download a url to a local file. It's efficient because it will
-// write as it downloads and not load the whole file into memory.
-func downloadFile(filepath string, url string) error {
-
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Write the body to file
-	_, err = io.Copy(out, resp.Body)
-	return err
-}
-
 func main() {
-	resultSheet, err := excelize.OpenFile("sp-survey-202003-data.xlsx")
+	const FileName = "sp-survey-202003-data.xlsx"
+	const SheetName = "Sheet1"
+
+	resultSheet, err := excelize.OpenFile(FileName)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	rows, err := resultSheet.GetRows("Sheet1")
+	rows, err := resultSheet.GetRows(SheetName)
 
 	columnHeaders := rows[0]
 	// fix column header names by removing "data-"
@@ -107,14 +42,15 @@ func main() {
 		modeChoices[i] = s
 		s = nil
 	}
-	prettyPrint(modeChoices)
+
+	fmt.Print(modeChoices)
 
 	whole := make([]map[string]string, len(rows)-1)
 
 	for j := 1; j < len(rows); j++ {
 		elementMap := make(map[string]string)
 		for i := 0; i < len(rows[j]); i++ {
-			if i >= 36 && i <= 2509 {
+			if i >= START && i <= END {
 				continue
 			}
 			elementMap[columnHeaders[i]] = strings.TrimSpace(rows[j][i])
@@ -124,32 +60,34 @@ func main() {
 		elementMap["mode_choice_3"] = modeChoices[j][2]
 		elementMap["mode_choice_4"] = modeChoices[j][3]
 		elementMap["mode_choice_5"] = modeChoices[j][4]
+		elementMap["meta-audit"] = util.ConvertToDirectLink(elementMap["meta-audit"])
 		whole[j-1] = elementMap
 	}
 
-	// if i >= 20 && i <= 2494 {
-	// 	if strings.TrimSpace(rows[j][i]) != "" {
-	// 		prettyPrint(rows[j][i])
-	// 		elementMap[rows[0][i]] = rows[j][i]
-	// 		continue
-	// 	}
-	// }
+	var results []util.Result
+	var jsonString, _ = json.Marshal(whole)
+	err = json.Unmarshal(jsonString, &results)
+	if err != nil {
+		panic(err)
+	}
 
-	// whole[]
-	jsonString, err := json.MarshalIndent(whole, "", "    ")
+	jsonString, _ = json.Marshal(results)
+
+	fixedJsonString := string(bytes.Replace([]byte(jsonString), []byte("\\u0026"), []byte("&"), -1))
 
 	f2, err2 := os.Create("results.json")
 	if err2 != nil {
 		fmt.Println(err)
 		return
 	}
-	_, err3 := f2.WriteString(string(jsonString))
+
+	_, err3 := f2.WriteString(fixedJsonString)
 	if err3 != nil {
 		fmt.Println(err)
 		f2.Close()
 		return
 	}
-	// fmt.Println(l, "bytes written successfully")
+
 	err4 := f2.Close()
 	if err4 != nil {
 		fmt.Println(err)
